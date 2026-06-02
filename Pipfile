@@ -1,0 +1,28 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "*"
+mysqlclient = "*"
+requests = "*"
+pypdf2 = "*"
+pinecone = "*"
+openrouter = "*"
+djangorestframework = "*"
+drf-nested-routers = "*"
+django-cors-headers = "*"
+gunicorn = "*"
+whitenoise = "*"
+dj-database-url = "*"
+python-dotenv = "*"
+psycopg2-binary = "*"
+django-ratelimit = "*"
+django-q2 = "*"
+croniter = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"
