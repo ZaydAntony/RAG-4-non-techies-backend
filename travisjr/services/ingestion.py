@@ -1,123 +1,179 @@
+from io import BytesIO
+import logging
+
 import PyPDF2
+from django.conf import settings
+
 from ..models import Document, Chunk
 from .embeddings import embedding
 from .vector_store import store_embeddings
-import logging
-import os
+
+from core.utils.storage import download_pdf
 
 logger = logging.getLogger(__name__)
 
-ALLOWED_EXTENSIONS = [".pdf"]
-MAX_FILE_SIZE_MB = 5
 
+def extract_text(file_obj):
+    logger.info("Commencing PDF extraction")
 
-def validate_file(file_path):
-    ext = os.path.splitext(file_path)[1].lower()
+    reader = PyPDF2.PdfReader(file_obj)
 
-    if ext not in ALLOWED_EXTENSIONS:
-        raise ValueError("Only PDF files allowed")
+    text = []
 
-    size_mb = os.path.getsize(file_path) / (1024 * 1024)
+    for page in reader.pages:
+        page_text = page.extract_text()
 
-    if size_mb > MAX_FILE_SIZE_MB:
-        raise ValueError("File too large (max 5MB)")
+        if page_text:
+            text.append(page_text)
 
-
-def extract_text(file_path):
-    logger.info("Commencing PDF File extraction")
-
-    text = ""
-    with open(file_path, "rb") as f:
-        reader = PyPDF2.PdfReader(f)
-
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + "\n"
-
-    return text.strip()
+    return "\n".join(text).strip()
 
 
 def chunking(text, chunk_size=900, overlap=150):
-    logger.info("Commencing Chunking")
+    logger.info("Commencing chunking")
 
-    text = " ".join(text.split())  # normalize whitespace
+    text = " ".join(text.split())
 
     chunks = []
-    start = 0
-    length = len(text)
 
-    while start < length:
-        end = min(start + chunk_size, length)
+    start = 0
+
+    while start < len(text):
+        end = min(start + chunk_size, len(text))
 
         chunk = text[start:end].strip()
 
-        if len(chunk) > 30:  # 🚀 filter noise chunks
+        if len(chunk) > 30:
             chunks.append(chunk)
 
         start += chunk_size - overlap
 
-    logger.info(f"Chunking completed: {len(chunks)} chunks")
+    logger.info(
+        f"Chunking completed successfully: {len(chunks)} chunks"
+    )
+
     return chunks
 
 
-def ingest_document(document_id):
-    document = Document.objects.select_related("session").get(id=document_id)
+def get_document_stream(document):
+    """
+    Returns a readable file object.
 
-    logger.info(f"INGESTION STARTED FOR: {document_id}")
+    Development:
+        Reads from local FileField.
+
+    Production:
+        Downloads from Supabase.
+    """
+
+    if settings.DEBUG:
+
+        document.file.open("rb")
+
+        return document.file
+
+    pdf_bytes = download_pdf(
+        document.storage_path
+    )
+
+    return BytesIO(pdf_bytes)
+
+
+def ingest_document(document_id):
+
+    document = Document.objects.select_related(
+        "session"
+    ).get(
+        id=document_id
+    )
+
+    logger.info(
+        f"INGESTION STARTED FOR: {document_id}"
+    )
 
     try:
+
         document.status = "processing"
-        document.save(update_fields=["status"])
+        document.save(
+            update_fields=["status"]
+        )
 
-        file_path = document.file.path
+        file_stream = get_document_stream(
+            document
+        )
 
-        validate_file(file_path)
+        try:
 
-        text = extract_text(file_path)
+            text = extract_text(
+                file_stream
+            )
+
+        finally:
+
+            if settings.DEBUG:
+                file_stream.close()
 
         if len(text) < 50:
-            raise ValueError("No valid extractable text found")
+            raise ValueError(
+                "No valid extractable text found"
+            )
 
         chunks = chunking(text)
 
-        # ===============================
-        # 🚀 BATCH EMBEDDING (CRITICAL SPEED BOOST)
-        # ===============================
+        if not chunks:
+            raise ValueError(
+                "No valid chunks generated"
+            )
+
         vectors = embedding(chunks)
-# 🚀 Upload ALL vectors in ONE request
+
         embedding_ids = store_embeddings(
             chunks=chunks,
             embeddings=vectors,
-            session_id=document.session.id
+            session_id=document.session.id,
         )
 
-        chunk_objects = []
-
-        for i, (chunk, embedding_id) in enumerate(zip(chunks, embedding_ids)):
-
-            chunk_objects.append(
-                Chunk(
-                    session=document.session,
-                    document=document,
-                    content=chunk,
-                    chunk_index=i,
-                    embedding_id=embedding_id
+        chunk_objects = [
+            Chunk(
+                session=document.session,
+                document=document,
+                content=chunk,
+                chunk_index=index,
+                embedding_id=embedding_id,
+            )
+            for index, (
+                chunk,
+                embedding_id,
+            ) in enumerate(
+                zip(
+                    chunks,
+                    embedding_ids,
                 )
             )
+        ]
 
-        # ===============================
-        # 🚀 BULK DB INSERT (BIG SPEED BOOST)
-        # ===============================
-        Chunk.objects.bulk_create(chunk_objects)
+        Chunk.objects.bulk_create(
+            chunk_objects
+        )
 
         document.status = "ready"
-        document.save(update_fields=["status"])
 
-        logger.info("INGESTION COMPLETED SUCCESSFULLY")
+        document.save(
+            update_fields=["status"]
+        )
+
+        logger.info(
+            f"INGESTION COMPLETED FOR: {document_id}"
+        )
 
     except Exception as e:
-        logger.error(f"INGESTION ERROR: {str(e)}")
+
+        logger.exception(
+            f"INGESTION ERROR FOR {document_id}: {e}"
+        )
 
         document.status = "error"
-        document.save(update_fields=["status"])
+
+        document.save(
+            update_fields=["status"]
+        )

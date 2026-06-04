@@ -1,6 +1,6 @@
 # 🚀 Raggit
 
-> *Meet the cutest RAG system you will ever see out there 🤭*  
+> *Meet the cutest RAG system you will ever see out there 🤭*
 > And yes… that’s a challenge. Try finding a better one 😝
 
 
@@ -24,10 +24,10 @@ Because learning AI concepts shouldn’t feel like reading a research paper.
 
 Raggit turns:
 
-- 📄 Documents → into searchable knowledge  
-- 🧠 Embeddings → into meaningful retrieval  
-- 💬 LLM responses → into interactive conversations  
-- ⚡ Pipelines → into a visual experience you can *see working*
+- Documents → into searchable knowledge  
+- Embeddings → into meaningful retrieval  
+- LLM responses → into interactive conversations  
+- Pipelines → into a visual experience you can *see working*
 
 All wrapped in a UI that feels more like a product than a backend experiment.
 
@@ -57,7 +57,7 @@ Raggit is built using a modern full-stack setup:
 - React 
 - OpenRouter API
 - Pinecone (Vector Database)
-- PostgreSQL (Production)
+- PostgreSQL (Production)-> Using supabase and also supabase bucket for file storage
 - MySQL (Development)
 - PyPDF (document ingestion)
 
@@ -65,13 +65,13 @@ Raggit is built using a modern full-stack setup:
 
 ## ⚙️ Features
 
-- 📄 PDF ingestion and processing
-- 🧠 Document chunking and embedding generation
-- 🔍 Semantic search using vector similarity
-- 💬 Context-aware chat with LLM responses
-- 🔄 Background processing with task queues - File ingestion
-- ⏳ Automatic cleanup of expired sessions
-- 🎯 Session-based memory isolation
+-  PDF ingestion and processing
+-  Document chunking and embedding generation
+-  Semantic search using vector similarity
+-  Context-aware chat with LLM responses
+-  Background processing with task queues - File ingestion
+-  Automatic cleanup of expired sessions
+-  Session-based memory isolation
 
 ---
 
@@ -79,15 +79,15 @@ Raggit is built using a modern full-stack setup:
 
 - No real-time streaming yet (polling-based responses)
 - File uploads are currently single-file focused
-- WebSockets not implemented (yet 😅, I am living by the principle of "as long as it works")
+- WebSockets not implemented (yet , I am living by the principle of "as long as it works")
 
 ---
 
 ## 🚀 Future Improvements
 
-- 🔥 Celery + Redis for scalable background processing  
-- 📂 Multi-file ingestion support  
-- ⚡ WebSockets for real-time chat streaming --Hopefully 
+- Celery + Redis for scalable background processing  
+- Multi-file ingestion support  
+- WebSockets for real-time chat streaming --Hopefully 
 
 ---
 

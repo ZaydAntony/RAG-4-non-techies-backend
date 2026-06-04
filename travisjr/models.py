@@ -39,7 +39,8 @@ class Document(models.Model):
     session=models.ForeignKey(Session,on_delete=models.CASCADE,related_name='docs')
     status=models.CharField(max_length=20, choices=STATUS_CHOICES, default='uploading')
     file=models.FileField(upload_to='Docs/')
-    file_name=models.CharField(max_length=100)
+    file_name=models.CharField(max_length=100, blank=True, null=True)
+    storage_path = models.CharField(max_length=500, blank=True, null=True)
     uploaded_at=models.DateTimeField(auto_now_add=True)
 
 class Chunk(models.Model):

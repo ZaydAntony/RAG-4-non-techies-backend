@@ -19,8 +19,11 @@ from rest_framework.viewsets import GenericViewSet
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 from datetime import timedelta
-
 from openrouter import OpenRouter
+from django.conf import settings
+from core.utils.storage import (
+    upload_pdf,
+)
 
 from .models import Session, Document, Chats, ChatSession
 from .serializers import (
@@ -29,7 +32,7 @@ from .serializers import (
     ChatsSerializer,
     ChatSessionSerializer,
 )
-
+import logging
 from .tasks import process_document
 from .services.retrieval import retrieve_chunks
 
@@ -42,7 +45,7 @@ MAX_MESSAGES = 10
 MAX_CONTEXT_CHARS = 12000
 MAX_HISTORY = 10
 
-
+logger = logging.getLogger(__name__)
 client = OpenRouter(api_key=settings.OPENROUTER_APIKEY)
 
 
@@ -120,12 +123,36 @@ class DocumentViewSet(
     def get_serializer_context(self):
         return {"session_id": self.kwargs["sessions_pk"]}
 
+        
     def perform_create(self, serializer):
-        session = get_object_or_404(Session, id=self.kwargs["sessions_pk"])
+
+        session = get_object_or_404(
+            Session,
+            id=self.kwargs["sessions_pk"]
+        )
 
         file_obj = serializer.validated_data["file"]
 
-        document = serializer.save(session=session, file_name=file_obj.name)
+        if settings.DEBUG:
+
+            document = serializer.save(
+                session=session,
+                file_name=file_obj.name
+            )
+
+        else:
+
+            storage_path = upload_pdf(
+                file_obj,
+                session.id
+            )
+
+            document = serializer.save(
+                session=session,
+                file_name=file_obj.name,
+                storage_path=storage_path,
+                file=None,
+            )
 
         process_document(document.id)
 

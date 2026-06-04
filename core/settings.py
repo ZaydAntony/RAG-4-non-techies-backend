@@ -137,6 +137,9 @@ USE_I18N = True
 
 USE_TZ = True
 
+if os.getenv("ENVIRONMENT", "dev"):
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = BASE_DIR / "Docs"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

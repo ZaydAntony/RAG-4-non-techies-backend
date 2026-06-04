@@ -1,3 +1,4 @@
+import os
 from rest_framework import serializers
 from .models import Session, ChatSession, Chats, Document, Chunk
 
@@ -31,12 +32,40 @@ class ChatsSerializer(serializers.ModelSerializer):
         return Chats.objects.create(chatsession=chatsession_id,**validated_data)
 
 
-
 class DocumentSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Document
-        fields = ["id", "status", "file", "file_name"]
-        read_only_fields = ["status","file_name"]
+        fields = [
+            "id",
+            "status",
+            "file",
+            "file_name",
+        ]
+        read_only_fields = [
+            "status",
+            "file_name",
+        ]
+
+    def validate_file(self, value):
+
+        ext = os.path.splitext(
+            value.name
+        )[1].lower()
+
+        if ext != ".pdf":
+            raise serializers.ValidationError(
+                "Only PDF files are allowed."
+            )
+
+        max_size = 5 * 1024 * 1024  # 5MB
+
+        if value.size > max_size:
+            raise serializers.ValidationError(
+                "File size cannot exceed 5MB."
+            )
+
+        return value
 
 
 class ChunkSerializer(serializers.ModelSerializer):
