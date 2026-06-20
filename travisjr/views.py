@@ -33,7 +33,7 @@ from .serializers import (
     ChatSessionSerializer,
 )
 import logging
-from .tasks import process_document
+from .services.ingestion import ingest_document
 from .services.retrieval import retrieve_chunks
 
 # ============================================
@@ -154,7 +154,7 @@ class DocumentViewSet(
                 file=None,
             )
 
-        process_document(document.id)
+        ingest_document(document.id)
 
 
 # ============================================

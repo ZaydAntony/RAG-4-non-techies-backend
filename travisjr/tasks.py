@@ -1,7 +1,6 @@
 import logging
 from django.conf import settings
 from django.utils import timezone
-from django_q.tasks import async_task
 from pinecone import Pinecone
 from .models import Session
 from core.utils.storage import delete_pdf
@@ -14,14 +13,6 @@ pc = Pinecone(
 index = pc.Index(
     settings.PINECONE_INDEX
 )
-
-
-def process_document(document_id):
-
-    async_task(
-        "travisjr.services.ingestion.ingest_document",
-        document_id,
-    )
 
 
 def cleanup_expired_sessions():

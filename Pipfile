@@ -19,8 +19,6 @@ dj-database-url = "*"
 python-dotenv = "*"
 psycopg2-binary = "*"
 django-ratelimit = "*"
-django-q2 = "*"
-croniter = "*"
 supabase = "*"
 
 [dev-packages]

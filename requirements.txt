@@ -7,14 +7,11 @@ cffi==2.0.0
 charset-normalizer==3.4.7
 click==8.4.1
 colorama==0.4.6
-croniter==6.2.2
 cryptography==48.0.0
 deprecation==2.1.0
 dj-database-url==3.1.2
 Django==5.2.14
 django-cors-headers==4.9.0
-django-picklefield==3.4.0
-django-q2==1.10.0
 django-ratelimit==4.1.0
 djangorestframework==3.17.1
 drf-nested-routers==0.95.0

@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'django_q',
     'travisjr',
 ]
 
@@ -182,12 +181,3 @@ LOGGING = {
 }
 
 
-Q_CLUSTER={
-    "name":"RAGWORKER",
-    "workers":2,
-    "timeout":300,
-    "retry":360,
-
-    "orm":"default"
-
-}
